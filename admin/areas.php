@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . "/../includes/conexion.php";
 require_once __DIR__ . "/../includes/funciones.php";
+enviarHeadersCache('privado');
 requiereAdmin();
 
 $error = "";
@@ -19,6 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $stmt = $mysqli->prepare("INSERT INTO area (nombre) VALUES (?)");
                 $stmt->bind_param("s", $nombre);
                 $stmt->execute();
+                cacheParcheAreas($mysqli);
                 guardarMensaje("Área creada.");
                 header("Location: areas.php");
                 exit;
@@ -38,6 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $stmt = $mysqli->prepare("UPDATE area SET nombre = ? WHERE id_area = ?");
                 $stmt->bind_param("si", $nombre, $id);
                 $stmt->execute();
+                cacheParcheAreas($mysqli, $id, $nombre, false);
                 guardarMensaje("Área actualizada.");
                 header("Location: areas.php");
                 exit;
@@ -60,6 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $del = $mysqli->prepare("DELETE FROM area WHERE id_area = ?");
             $del->bind_param("i", $id);
             $del->execute();
+            cacheParcheAreas($mysqli, $id, null, true);
             guardarMensaje("Área eliminada.");
             header("Location: areas.php");
             exit;

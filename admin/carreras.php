@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . "/../includes/conexion.php";
 require_once __DIR__ . "/../includes/funciones.php";
+enviarHeadersCache('privado');
 requiereAdmin();
 
 $q = trim($_GET["q"] ?? "");
@@ -14,14 +15,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["accion"] ?? "") === "elimi
     $del = $mysqli->prepare("DELETE FROM carrera WHERE id_carrera = ?");
     $del->bind_param("i", $id);
     $del->execute();
+    cacheParcheCarreraEliminada($mysqli, $id);
     guardarMensaje("Carrera eliminada.");
     header("Location: carreras.php");
     exit;
 }
 
-$areas = $mysqli->query("SELECT id_area, nombre FROM area ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
-$ciudadesStmt = $mysqli->query("SELECT DISTINCT ciudad FROM universidad ORDER BY ciudad");
-$ciudades = array_column($ciudadesStmt->fetch_all(MYSQLI_ASSOC), "ciudad");
+$areas = obtenerAreas($mysqli);
+$ciudades = obtenerCiudades($mysqli);
 
 $where = " WHERE 1=1";
 $types = "";

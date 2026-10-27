@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . "/../includes/conexion.php";
 require_once __DIR__ . "/../includes/funciones.php";
+enviarHeadersCache('privado');
 requiereAdmin();
 
 $id = (int) ($_GET["id"] ?? $_POST["id_universidad"] ?? 0);
@@ -62,6 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
                 $stmt->bind_param("ssssssi", $nombre, $ciudad, $tipo, $sitioWeb, $descripcion, $logoUrl, $id);
                 $stmt->execute();
+                cacheParcheUniversidad($mysqli, $id);
                 guardarMensaje("Universidad actualizada.");
             } else {
                 $stmt = $mysqli->prepare(
@@ -70,6 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
                 $stmt->bind_param("ssssss", $nombre, $ciudad, $tipo, $sitioWeb, $descripcion, $logoUrl);
                 $stmt->execute();
+                cacheParcheUniversidad($mysqli, (int) $mysqli->insert_id);
                 guardarMensaje("Universidad creada.");
             }
             header("Location: universidades.php");

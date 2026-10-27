@@ -2,11 +2,13 @@
 session_start();
 require_once __DIR__ . "/../includes/conexion.php";
 require_once __DIR__ . "/../includes/funciones.php";
+enviarHeadersCache('privado');
 requiereAdmin();
 
-$totalUniversidades = (int) $mysqli->query("SELECT COUNT(*) AS c FROM universidad")->fetch_assoc()["c"];
-$totalCarreras = (int) $mysqli->query("SELECT COUNT(*) AS c FROM carrera")->fetch_assoc()["c"];
-$totalAreas = (int) $mysqli->query("SELECT COUNT(*) AS c FROM area")->fetch_assoc()["c"];
+$stats = obtenerStats($mysqli);
+$totalUniversidades = $stats['universidades'];
+$totalCarreras = $stats['carreras'];
+$totalAreas = count(obtenerAreas($mysqli));
 
 require __DIR__ . "/../includes/header_admin.php";
 ?>

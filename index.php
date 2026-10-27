@@ -2,19 +2,12 @@
 session_start();
 require_once __DIR__ . "/includes/conexion.php";
 require_once __DIR__ . "/includes/funciones.php";
+enviarHeadersCache('publico');
 
-$carreras = $mysqli->query(
-    "SELECT c.id_carrera, c.nombre AS carrera, c.duracion_semestres, c.modalidad, c.descripcion,
-            a.nombre AS area, u.nombre AS universidad, u.ciudad, u.tipo
-     FROM carrera c
-     INNER JOIN area a ON a.id_area = c.id_area
-     INNER JOIN universidad u ON u.id_universidad = c.id_universidad
-     ORDER BY c.nombre ASC
-     LIMIT 6"
-)->fetch_all(MYSQLI_ASSOC);
-
-$totalUni = (int) $mysqli->query("SELECT COUNT(*) AS c FROM universidad")->fetch_assoc()["c"];
-$totalCarrerasDb = (int) $mysqli->query("SELECT COUNT(*) AS c FROM carrera")->fetch_assoc()["c"];
+$carreras = obtenerHomeDestacadas($mysqli);
+$stats = obtenerStats($mysqli);
+$totalUni = $stats['universidades'];
+$totalCarrerasDb = $stats['carreras'];
 
 require __DIR__ . "/includes/header.php";
 ?>

@@ -36,9 +36,14 @@ También puedes importar `bd/expofuturo.sql` desde phpMyAdmin.
 - `carrera.php` — detalle con hero, universidad y relacionadas
 - `admin/` — login, dashboard y CRUD con filtros y paginación (tablas en desktop, cards en móvil)
 - `bd/expofuturo.sql` — esquema y seed colombiano (12 universidades, 30 carreras)
-- `includes/` — conexión, helpers e imágenes por área
+- `includes/` — conexión, helpers, caché en archivos y parche write-through
+- `cache/` — ficheros de caché (TTL 4 h; denegado vía `.htaccess`)
 - `css/estilos.css` — tipografía Libre Baskerville + Figtree, azul/lila/rosado
 - `img/` — logo + fotos de campus, estudiantes y áreas (Unsplash)
+
+## Cache (hosting compartido)
+
+Archivos bajo `cache/` (TTL 4 h). Al crear/editar/eliminar carreras, áreas o universidades se **parchea** el caché (sin borrar todo). Estáticos con `.htaccess`. Sin Redis.
 
 ## Conexión
 

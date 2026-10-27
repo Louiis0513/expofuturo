@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . "/../includes/conexion.php";
 require_once __DIR__ . "/../includes/funciones.php";
+enviarHeadersCache('privado');
 requiereAdmin();
 
 $id = (int) ($_GET["id"] ?? $_POST["id_carrera"] ?? 0);
@@ -15,6 +16,7 @@ $carrera = [
     "descripcion" => "",
     "id_universidad" => "",
 ];
+$antes = null;
 
 if ($editando && $_SERVER["REQUEST_METHOD"] !== "POST") {
     $stmt = $mysqli->prepare("SELECT * FROM carrera WHERE id_carrera = ?");
@@ -59,6 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } else {
         try {
             if ($editando) {
+                $antes = cargarCarreraCompleta($mysqli, $id);
                 $stmt = $mysqli->prepare(
                     "UPDATE carrera
                      SET nombre=?, id_area=?, duracion_semestres=?, modalidad=?, descripcion=?, id_universidad=?
@@ -66,6 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
                 $stmt->bind_param("siissii", $nombre, $idArea, $duracion, $modalidad, $descripcion, $idUniversidad, $id);
                 $stmt->execute();
+                cacheParcheCarrera($mysqli, $id, $antes);
                 guardarMensaje("Carrera actualizada.");
             } else {
                 $stmt = $mysqli->prepare(
@@ -74,6 +78,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
                 $stmt->bind_param("siissi", $nombre, $idArea, $duracion, $modalidad, $descripcion, $idUniversidad);
                 $stmt->execute();
+                $nuevoId = (int) $mysqli->insert_id;
+                cacheParcheCarrera($mysqli, $nuevoId);
                 guardarMensaje("Carrera creada.");
             }
             header("Location: carreras.php");
@@ -84,7 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-$areas = $mysqli->query("SELECT id_area, nombre FROM area ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
+$areas = obtenerAreas($mysqli);
 $universidades = $mysqli->query("SELECT id_universidad, nombre, ciudad FROM universidad ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
 
 require __DIR__ . "/../includes/header_admin.php";

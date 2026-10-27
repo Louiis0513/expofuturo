@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . "/includes/conexion.php";
 require_once __DIR__ . "/includes/funciones.php";
+enviarHeadersCache('publico');
 
 $id = (int) ($_GET["id"] ?? 0);
 if ($id <= 0) {
@@ -10,18 +11,7 @@ if ($id <= 0) {
     exit;
 }
 
-$stmt = $mysqli->prepare(
-    "SELECT c.id_carrera, c.nombre AS carrera, c.duracion_semestres, c.modalidad, c.descripcion AS desc_carrera,
-            c.id_area, a.nombre AS area,
-            u.id_universidad, u.nombre AS universidad, u.ciudad, u.tipo, u.sitio_web, u.descripcion AS desc_universidad
-     FROM carrera c
-     INNER JOIN area a ON a.id_area = c.id_area
-     INNER JOIN universidad u ON u.id_universidad = c.id_universidad
-     WHERE c.id_carrera = ?"
-);
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$carrera = $stmt->get_result()->fetch_assoc();
+$carrera = obtenerCarrera($mysqli, $id);
 
 if (!$carrera) {
     guardarMensaje("Carrera no encontrada.");
@@ -29,19 +19,8 @@ if (!$carrera) {
     exit;
 }
 
-$rel = $mysqli->prepare(
-    "SELECT c.id_carrera, c.nombre AS carrera, u.nombre AS universidad, u.ciudad, a.nombre AS area
-     FROM carrera c
-     INNER JOIN universidad u ON u.id_universidad = c.id_universidad
-     INNER JOIN area a ON a.id_area = c.id_area
-     WHERE c.id_area = ? AND c.id_carrera <> ?
-     ORDER BY c.nombre
-     LIMIT 3"
-);
 $idArea = (int) $carrera["id_area"];
-$rel->bind_param("ii", $idArea, $id);
-$rel->execute();
-$relacionadas = $rel->get_result()->fetch_all(MYSQLI_ASSOC);
+$relacionadas = obtenerCarrerasRelacionadas($mysqli, $idArea, $id, 3);
 
 require __DIR__ . "/includes/header.php";
 ?>

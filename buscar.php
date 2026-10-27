@@ -2,76 +2,23 @@
 session_start();
 require_once __DIR__ . "/includes/conexion.php";
 require_once __DIR__ . "/includes/funciones.php";
+enviarHeadersCache('publico');
 
 $q = trim($_GET["q"] ?? "");
 $idArea = (int) ($_GET["area"] ?? 0);
 $ciudad = trim($_GET["ciudad"] ?? "");
 $tipo = trim($_GET["tipo"] ?? "");
-
-$areas = $mysqli->query("SELECT id_area, nombre FROM area ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
-
-$ciudadesStmt = $mysqli->query("SELECT DISTINCT ciudad FROM universidad ORDER BY ciudad");
-$ciudades = array_column($ciudadesStmt->fetch_all(MYSQLI_ASSOC), "ciudad");
-
-$where = " WHERE 1=1";
-$types = "";
-$params = [];
-
-if ($q !== "") {
-    $where .= " AND (c.nombre LIKE ? OR c.descripcion LIKE ? OR u.nombre LIKE ?)";
-    $like = "%" . $q . "%";
-    $types .= "sss";
-    $params[] = $like;
-    $params[] = $like;
-    $params[] = $like;
-}
-if ($idArea > 0) {
-    $where .= " AND c.id_area = ?";
-    $types .= "i";
-    $params[] = $idArea;
-}
-if ($ciudad !== "") {
-    $where .= " AND u.ciudad = ?";
-    $types .= "s";
-    $params[] = $ciudad;
-}
-if ($tipo === "publica" || $tipo === "privada") {
-    $where .= " AND u.tipo = ?";
-    $types .= "s";
-    $params[] = $tipo;
+if ($tipo !== "publica" && $tipo !== "privada") {
+    $tipo = "";
 }
 
-$countSql = "SELECT COUNT(*) AS total
-             FROM carrera c
-             INNER JOIN area a ON a.id_area = c.id_area
-             INNER JOIN universidad u ON u.id_universidad = c.id_universidad"
-          . $where;
-$countStmt = $mysqli->prepare($countSql);
-if ($types !== "") {
-    $countStmt->bind_param($types, ...$params);
-}
-$countStmt->execute();
-$total = (int) $countStmt->get_result()->fetch_assoc()["total"];
+$areas = obtenerAreas($mysqli);
+$ciudades = obtenerCiudades($mysqli);
 
+$todas = obtenerCatalogo($mysqli, $idArea, $ciudad, $tipo, $q);
+$total = count($todas);
 $pag = calcularPaginacion($total, 9);
-
-$sql = "SELECT c.id_carrera, c.nombre AS carrera, c.duracion_semestres, c.modalidad, c.descripcion,
-               a.nombre AS area, u.nombre AS universidad, u.ciudad, u.tipo
-        FROM carrera c
-        INNER JOIN area a ON a.id_area = c.id_area
-        INNER JOIN universidad u ON u.id_universidad = c.id_universidad"
-     . $where
-     . " ORDER BY c.nombre ASC LIMIT ? OFFSET ?";
-
-$listTypes = $types . "ii";
-$listParams = $params;
-$listParams[] = $pag["por_pagina"];
-$listParams[] = $pag["offset"];
-
-$stmt = $mysqli->prepare($sql);
-$stmt->bind_param($listTypes, ...$listParams);
-$stmt->execute();
-$carreras = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$carreras = array_slice($todas, $pag["offset"], $pag["por_pagina"]);
 
 $hayFiltros = ($q !== "" || $idArea > 0 || $ciudad !== "" || $tipo !== "");
 $nombreAreaActiva = "";
